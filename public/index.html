@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comix Scraper</title>
+    <!-- Font & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        /* ── reset & base ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d0e13;
+            color: #eaeef2;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 24px 16px 60px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1c25;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3d4050;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5f78;
+        }
+
+        .app {
+            max-width: 880px;
+            width: 100%;
+        }
+
+        /* ── header ── */
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .app-header .logo {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #f0b34b, #f57c4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .app-header .logo i {
+            -webkit-text-fill-color: initial;
+            color: #f0b34b;
+            margin-right: 4px;
+        }
+        .app-header .badge {
+            font-size: 11px;
+            font-weight: 600;
+            background: #2a2d3a;
+            color: #9aa1b8;
+            padding: 2px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            margin-left: auto;
+        }
+
+        /* ── search bar ── */
+        .search-section {
+            background: #161820;
+            border-radius: 20px;
+            padding: 20px 24px 24px;
+            border: 1px solid #282c3a;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #9aa1b8;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-row input {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 18px;
+            background: #0d0e13;
+            border: 1px solid #2c3142;
+            border-radius: 14px;
+            color: #eaeef2;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.25s, box-shadow 0.25s;
+            font-family: 'Inter', sans-serif;
+        }
+        .search-row input::placeholder {
+            color: #5a5f78;
+        }
+        .search-row input:focus {
+            border-color: #f0b34b;
+            box-shadow: 0 0 0 3px rgba(240, 179, 75, 0.15);
+        }
+
+        .search-row button {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #f0b34b, #e8923a);
+            border: none;
+            border-radius: 14px;
+            color: #0d0e13;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.25s, background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .search-row button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(240, 179, 75, 0.35);
+            background: linear-gradient(135deg, #f5c15a, #ed9a44);
+        }
+        .search-row button:active {
+            transform: scale(0.97);
+        }
+        .search-row button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .search-hint {
+            font-size: 12px;
+            color: #5a5f78;
+            margin-top: 10px;
+        }
+        .search-hint i {
+            margin-right: 4px;
+        }
+
+        /* ── status / loading ── */
+        .status {
+            text-align: center;
+            padding: 20px 0 10px;
+            font-size: 14px;
+            color: #9aa1b8;
+        }
+        .status .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid #2c3142;
+            border-top-color: #f0b34b;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── manga card ── */
+        .manga-card {
+            display: none;
+            background: #161820;
+            border-radius: 20px;
+            border: 1px solid #282c3a;
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            gap: 24px;
+            align-items: flex-start;
+        }
+        .manga-card.visible {
+            display: flex;
+        }
+
+        .manga-poster {
+            flex: 0 0 140px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #0d0e13;
+            border: 1px solid #282c3a;
+            aspect-ratio: 2/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .manga-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .manga-poster .placeholder {
+            color: #3d4050;
+            font-size: 36px;
+        }
+
+        .manga-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .manga-info h2 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-bottom: 4px;
+        }
+        .manga-info .meta {
+            font-size: 13px;
+            color: #9aa1b8;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .manga-info .meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .manga-info .meta i {
+            font-size: 13px;
+            color: #5a5f78;
+        }
+        .manga-info .desc {
+            font-size: 14px;
+            color: #c8cedb;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-height: 4.5em;
+        }
+
+        /* ── chapter toolbar ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 0 2px;
+        }
+        .toolbar .left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .toolbar .left label {
+            font-size: 14px;
+            color: #9aa1b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toolbar .left input[type="checkbox"] {
+            accent-color: #f0b34b;
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+        .toolbar .right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-download-selected {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.3s, background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-download-selected:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(74, 124, 247, 0.35);
+            background: linear-gradient(135deg, #5a8cff, #7c6cf7);
+        }
+        .btn-download-selected:active {
+            transform: scale(0.96);
+        }
+        .btn-download-selected:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-select-all {
+            padding: 8px 16px;
+            background: #2a2d3a;
+            border: 1px solid #3d4050;
+            border-radius: 10px;
+            color: #c8cedb;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-select-all:hover {
+            background: #343849;
+            border-color: #5a5f78;
+        }
+
+        /* ── chapter list ── */
+        .chapter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            background: #0d0e13;
+            border-radius: 14px;
+            border: 1px solid #1f222e;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .chapter-item:hover {
+            border-color: #3d4050;
+            background: #11131c;
+        }
+
+        .chapter-item .check {
+            flex: 0 0 20px;
+        }
+        .chapter-item .check input[type="checkbox"] {
+            accent-color: #f0b34b;
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+
+        .chapter-item .number {
+            font-weight: 600;
+            font-size: 15px;
+            min-width: 60px;
+            color: #eaeef2;
+        }
+        .chapter-item .pages {
+            font-size: 13px;
+            color: #7a8098;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .chapter-item .pages i {
+            font-size: 12px;
+        }
+        .chapter-item .size {
+            font-size: 13px;
+            color: #7a8098;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .chapter-item .dl-btn {
+            padding: 8px 18px;
+            background: #1f222e;
+            border: 1px solid #2c3142;
+            border-radius: 10px;
+            color: #c8cedb;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .chapter-item .dl-btn i {
+            font-size: 13px;
+        }
+        .chapter-item .dl-btn:hover {
+            background: #f0b34b;
+            border-color: #f0b34b;
+            color: #0d0e13;
+            transform: scale(1.04);
+            box-shadow: 0 4px 16px rgba(240, 179, 75, 0.25);
+        }
+        .chapter-item .dl-btn:active {
+            transform: scale(0.95);
+        }
+        .chapter-item .dl-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+            background: #1f222e !important;
+            border-color: #2c3142 !important;
+            color: #5a5f78 !important;
+        }
+
+        .chapter-item .dl-btn .spinner-sm {
+            display: none;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #2c3142;
+            border-top-color: #f0b34b;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .chapter-item .dl-btn.loading .spinner-sm {
+            display: inline-block;
+        }
+        .chapter-item .dl-btn.loading .btn-text {
+            display: none;
+        }
+        .chapter-item .dl-btn.loading i {
+            display: none;
+        }
+
+        /* ── empty / error ── */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #5a5f78;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+        .empty-state h3 {
+            font-weight: 500;
+            color: #9aa1b8;
+            margin-bottom: 6px;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .error-msg {
+            background: #2d1a1a;
+            border: 1px solid #5a2a2a;
+            color: #f0a0a0;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 14px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .error-msg i {
+            font-size: 18px;
+            color: #d46a6a;
+        }
+
+        /* ── responsive ── */
+        @media (max-width: 640px) {
+            .search-row input {
+                min-width: 140px;
+                font-size: 14px;
+                padding: 12px 14px;
+            }
+            .search-row button {
+                padding: 12px 18px;
+                font-size: 14px;
+            }
+            .manga-card {
+                flex-direction: column;
+                align-items: center;
+                padding: 18px;
+            }
+            .manga-poster {
+                flex: 0 0 120px;
+                width: 120px;
+            }
+            .manga-info h2 {
+                font-size: 19px;
+                text-align: center;
+            }
+            .manga-info .meta {
+                justify-content: center;
+            }
+            .manga-info .desc {
+                text-align: center;
+            }
+            .chapter-item {
+                flex-wrap: wrap;
+                gap: 8px 12px;
+                padding: 12px 14px;
+            }
+            .chapter-item .number {
+                min-width: 50px;
+                font-size: 14px;
+            }
+            .chapter-item .pages {
+                font-size: 12px;
+            }
+            .chapter-item .size {
+                font-size: 12px;
+                min-width: 50px;
+            }
+            .chapter-item .dl-btn {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .toolbar .left {
+                justify-content: center;
+            }
+            .toolbar .right {
+                justify-content: center;
+            }
+            .btn-download-selected {
+                justify-content: center;
+            }
+            .app-header .logo {
+                font-size: 21px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .search-section {
+                padding: 16px 16px 20px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .chapter-item .pages {
+                display: none;
+            }
+            .chapter-item .size {
+                min-width: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+
+        <!-- Header -->
+        <header class="app-header">
+            <span class="logo"><i class="fas fa-book-open"></i>Comix<span style="color:#eaeef2;-webkit-text-fill-color:#eaeef2;">Scraper</span></span>
+            <span class="badge"><i class="fas fa-bolt" style="margin-right:4px;"></i>v1.0</span>
+        </header>
+
+        <!-- Search -->
+        <section class="search-section">
+            <label class="search-label"><i class="fas fa-search" style="margin-right:6px;"></i>Enter manga name or URL</label>
+            <div class="search-row">
+                <input type="text" id="searchInput" placeholder="e.g. One Piece or https://comix.to/manga/..." />
+                <button id="searchBtn"><i class="fas fa-arrow-right"></i> Fetch</button>
+            </div>
+            <div class="search-hint"><i class="fas fa-info-circle"></i> Paste a comix.to manga URL or just the title</div>
+            <div id="statusArea" class="status" style="display:none;"></div>
+            <div id="errorArea"></div>
+        </section>
+
+        <!-- Manga Card -->
+        <div class="manga-card" id="mangaCard">
+            <div class="manga-poster" id="posterContainer">
+                <img id="posterImg" src="" alt="Poster" />
+                <span class="placeholder" id="posterPlaceholder"><i class="fas fa-image"></i></span>
+            </div>
+            <div class="manga-info">
+                <h2 id="mangaTitle">—</h2>
+                <div class="meta">
+                    <span><i class="fas fa-folder"></i> <span id="chapterCount">0</span> chapters</span>
+                    <span><i class="fas fa-file-image"></i> <span id="totalPages">0</span> pages</span>
+                    <span><i class="fas fa-hard-drive"></i> ~<span id="totalSize">0</span> MB</span>
+                </div>
+                <div class="desc" id="mangaDesc">Loading description…</div>
+            </div>
+        </div>
+
+        <!-- Toolbar + Chapter List -->
+        <div id="listContainer" style="display:none;">
+            <div class="toolbar">
+                <div class="left">
+                    <label><input type="checkbox" id="selectAll" /> Select all</label>
+                    <span style="font-size:13px;color:#5a5f78;" id="selectedCount">0 selected</span>
+                </div>
+                <div class="right">
+                    <button class="btn-select-all" id="invertBtn">Invert</button>
+                    <button class="btn-download-selected" id="downloadSelectedBtn">
+                        <i class="fas fa-download"></i> Download Selected
+                    </button>
+                </div>
+            </div>
+            <div class="chapter-list" id="chapterList"></div>
+        </div>
+
+        <!-- Empty state (shown when no manga loaded) -->
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-book"></i>
+            <h3>No manga loaded</h3>
+            <p>Search for a manga above to get started.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // ─── DOM refs ────────────────────────────────────────────────
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const statusArea = document.getElementById('statusArea');
+        const errorArea = document.getElementById('errorArea');
+        const mangaCard = document.getElementById('mangaCard');
+        const posterImg = document.getElementById('posterImg');
+        const posterPlaceholder = document.getElementById('posterPlaceholder');
+        const mangaTitle = document.getElementById('mangaTitl
