@@ -1,0 +1,18 @@
+{
+  "name": "comix-scraper",
+  "version": "1.0.0",
+  "description": "Scrape manga from comix.to and download as CBZ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "archiver": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
